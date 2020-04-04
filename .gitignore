@@ -1,0 +1,7 @@
+nohup.out
+*.pro.user*
+*.autosave
+build-*/
+.idea/
+cmake-build-debug/
+thirdparty/
