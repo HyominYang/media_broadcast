@@ -21,6 +21,7 @@ enum Code
   kBroadcastTextType1        = 0x00001000,
   kResultOk                  = 0x00000000,
   kResultError               = 0x00000001,
+  kProtocolError             = 0xffffffff,
   ID_SIZE = 8,
   CODE_SIZE = sizeof(uint32_t),
   REQ_MINIMUM_SIZE = CODE_SIZE+ID_SIZE,
