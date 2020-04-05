@@ -31,6 +31,20 @@ bool CheckValidation(const zmq::message_t &message)
   }
   return true;
 }
+size_t GetDataSize(const zmq::message_t &message)
+{
+    if (message.size() <= Code::CODE_SIZE + Code::ID_SIZE) {
+        return 0;
+    }
+    return message.size() - (Code::CODE_SIZE + Code::ID_SIZE);
+}
+const char* GetData(const zmq::message_t &message)
+{
+    if (!GetDataSize(message)) {
+        return NULL;
+    }
+    return reinterpret_cast<const char *>(message.data()) + Code::CODE_SIZE + Code::ID_SIZE;
+}
 uint32_t GetCode(const zmq::message_t &message)
 {
   return ntohl(*reinterpret_cast<const uint32_t*>(message.data()));

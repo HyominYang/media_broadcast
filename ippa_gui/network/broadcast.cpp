@@ -1,7 +1,8 @@
 #include "broadcast.h"
 #include <QDebug>
 #include <zmq/zmq.hpp>
-#include "ControlMessage.h"
+#include "util/protocol/protocol.h"
+#include "env.h"
 
 namespace network {
 Broadcast::Broadcast(QThread *parent) : QThread(parent)
@@ -13,8 +14,10 @@ void Broadcast::run()
     while (1) {
         zmq::context_t zmq_ctx;
         zmq::socket_t socket(zmq_ctx, zmq::socket_type::sub);
-        qDebug()<<"Try connect to broadcast-server";
-        socket.connect("tcp://192.168.0.21:5556");
+        std::string server_ip = Environment::instance().ip();
+        qDebug()<<"Try connect to broadcast-server ("<<server_ip.c_str()<<")";
+        std::string server_addr = "tcp://" + server_ip + ":5556";
+        socket.connect(server_addr);
         qDebug()<<"Broadcast-server is connected";
 
         while (1) {

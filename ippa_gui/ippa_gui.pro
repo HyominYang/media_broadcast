@@ -14,9 +14,10 @@ DEFINES += QT_DEPRECATED_WARNINGS ZMQ_STATIC
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+        ../util/protocol/protocol.cpp \
+        env.cpp \
         main.cpp \
         main_control.cpp \
-        network/ControlMessage.cpp \
         network/broadcast.cpp \
         network/client.cpp
 
@@ -26,13 +27,19 @@ TRANSLATIONS += \
     ippa_gui_ko_KR.ts
 
 INCLUDEPATH += \
-    /home/wind/workspace/qt/thirdparty/include \
-    /home/wind/workspace/qt/thirdparty/include/zmq
+        /usr/include/glib-2.0 \
+        /usr/include/gstreamer-1.0 \
+        /home/wind/workspace/private/media_broadcast \
+        /home/wind/workspace/private/media_broadcast/thirdparty/include \
+        /home/wind/workspace/private/media_broadcast/thirdparty/include/zmq \
+
 
 QMAKE_LIBDIR += \
-    /home/wind/workspace/qt/thirdparty/libs/zmq \
+        /home/wind/workspace/private/media_broadcast/thirdparty/libs/zmq \
+        /home/wind/workspace/private/media_broadcast/thirdparty/libs/glog \
 
-LIBS += -lzmq
+
+LIBS += -lzmq -lglog
 
 # Additional import path used to resolve QML modules in Qt Creator's code model
 QML_IMPORT_PATH =
@@ -46,6 +53,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 HEADERS += \
+  ../util/protocol/protocol.h \
   main_control.h \
   network/ControlMessage.h \
   network/broadcast.h \

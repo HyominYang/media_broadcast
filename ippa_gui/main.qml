@@ -7,7 +7,7 @@ Window {
     visible: true
     width: 640
     height: 480
-    title: qsTr("Hello World")
+    title: qsTr("Manager")
 
     signal qmls_request(string msg)
     function qmlf_message(msg)
@@ -28,6 +28,7 @@ Window {
                 height: 50
                 TextEdit {
                     id: i_broadcast_target
+                    text: "1001"
                     anchors.fill: parent
                     font.pixelSize: 20
                     verticalAlignment: TextEdit.AlignVCenter
@@ -54,6 +55,7 @@ Window {
                 height: 50
                 TextEdit {
                     id: i_broadcast_text_value
+                    text: "Hello, World!"
                     anchors.fill: parent
                     font.pixelSize: 20
                     verticalAlignment: TextEdit.AlignVCenter

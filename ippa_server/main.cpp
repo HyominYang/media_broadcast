@@ -16,7 +16,13 @@ class ControlData {
  public:
   ControlData()
   {}
-  zmq::message_t* append_broadcast_message(zmq::message_t *message)
+  void append_broadcast_message(const zmq::message_t &message)
+  {
+    zmq::message_t *m = new zmq::message_t(message.size());
+    memcpy(m->data(), message.data(),message.size());
+    append_broadcast_message(m);
+  }
+  void append_broadcast_message(zmq::message_t *message)
   {
     std::lock_guard<std::mutex> lock_guard(lock_broadcast_queue_);
     broadcast_queue_.push_back(message);
@@ -31,6 +37,10 @@ class ControlData {
     broadcast_queue_.pop_front();
     return message;
   }
+  static ControlData& instance() {
+    static ControlData control_data;
+    return control_data;
+  }
  private:
   std::mutex lock_broadcast_queue_;
   std::deque<zmq::message_t*> broadcast_queue_;
@@ -41,7 +51,8 @@ zmq::message_t *RequestProcedure(zmq::message_t &req)
     return NULL;
   }
   uint32_t code = protocol::GetCode(req);
-  LOG(INFO)<<protocol::GetID(req)<<"|"<<std::setw(8)<<std::hex<<std::setfill('0')<<code<<"|"<<protocol::CodeToString(code);
+	std::string id(protocol::GetID(req), protocol::Code::ID_SIZE);
+  LOG(INFO)<<id<<"|"<<std::setw(8)<<std::hex<<std::setfill('0')<<code<<"|"<<protocol::CodeToString(code);
   if (code == protocol::Code::kKeepAlive) {
     return protocol::MakeReply(protocol::Code::kResultOk);
   }
@@ -60,10 +71,15 @@ zmq::message_t *RequestProcedure(zmq::message_t &req)
   if (code == protocol::Code::kBroadcastMicCloseSuccess) {
     return protocol::MakeReply(protocol::Code::kResultOk);
   }
+  if (code == protocol::Code::kBroadcastTextType1) {
+    return protocol::MakeReply(protocol::Code::kResultOk);
+  }
+  LOG(INFO)<<"not processing....";
   return NULL;
 }
 void* RequestClientWorker(void* param)
 {
+  ControlData *data = static_cast<ControlData*>(param);
   while(true) {
     zmq::context_t ctx(1);
     zmq::socket_t socket(ctx, zmq::socket_type::rep);
@@ -74,11 +90,13 @@ void* RequestClientWorker(void* param)
         zmq::message_t req;
         socket.recv(req);
         zmq::message_t *rep = RequestProcedure(req);
-        if (rep) {
-          LOG(INFO)<<"reply... ("<<rep->size()<<")";
-          socket.send(*rep);
-          delete rep;
+        if (!rep) {
+          break;
         }
+        LOG(INFO)<<"reply... ("<<rep->size()<<")";
+        socket.send(*rep);
+        delete rep;
+        data->append_broadcast_message(req);
       } catch (zmq::error_t &e) {
         std::cout<<e.what()<<" ("<<e.num()<<")";
         break;
@@ -103,9 +121,10 @@ void* BroadCastServerWorker(void* param)
       try {
         zmq::message_t *msg;
         do {
-          usleep(100000);
+          usleep(1000000);
           msg = data->get_broadcast_message();
           if (msg) {
+            LOG(INFO)<<"broad-casting...";
             socket.send(*msg);
             delete msg;
           }

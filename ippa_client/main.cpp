@@ -18,7 +18,13 @@ class ControlData {
  public:
   ControlData()
   {}
-  zmq::message_t* append_broadcast_message(zmq::message_t *message)
+  void append_broadcast_message(const zmq::message_t &message)
+  {
+    zmq::message_t *m = new zmq::message_t(message.size());
+    memcpy(m->data(), message.data(),message.size());
+    append_broadcast_message(m);
+  }
+  void append_broadcast_message(zmq::message_t *message)
   {
     std::lock_guard<std::mutex> lock_guard(lock_broadcast_queue_);
     broadcast_queue_.push_back(message);
@@ -62,6 +68,10 @@ zmq::message_t *RequestProcedure(zmq::message_t &req)
   if (code == protocol::Code::kBroadcastMicCloseSuccess) {
     return protocol::MakeReply(protocol::Code::kResultOk);
   }
+  if (code == protocol::Code::kBroadcastTextType1) {
+    return protocol::MakeReply(protocol::Code::kResultOk);
+  }
+  LOG(INFO)<<"not processing....";
   return NULL;
 }
 void* RequestClientWorker(void* param)

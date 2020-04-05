@@ -22,6 +22,7 @@ int main(int argc, char *argv[])
     engine.load(url);
 
     MainControl m;
+    QObject::connect(&m, SIGNAL(sig_request_message(QString)), &c, SLOT(slot_request_message(QString)));
     m.set_engine(&engine);
     m.start();
 

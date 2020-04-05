@@ -33,9 +33,9 @@ void MainControl::gui_message(QString msg)
 }
 void MainControl::run()
 {
-  while(1)
-  {
-    sleep(1);
-    gui_message("...");
-  }
+//  while(1) // test code
+//  {
+//    sleep(1);
+//    gui_message("...");
+//  }
 }

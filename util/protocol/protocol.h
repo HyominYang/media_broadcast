@@ -7,7 +7,7 @@
 
 #include <cstdint>
 #include <iostream>
-#include <thirdparty/include/zmq/zmq.hpp>
+#include <zmq/zmq.hpp>
 
 namespace protocol {
 enum Code
@@ -32,6 +32,8 @@ std::string CodeToString(const uint32_t &code);
 bool CheckValidation(const zmq::message_t &message);
 uint32_t GetCode(const zmq::message_t &message);
 const char* GetID(const zmq::message_t &message);
+size_t GetDataSize(const zmq::message_t &message);
+const char* GetData(const zmq::message_t &message);
 zmq::message_t *MakeRequest(const uint32_t &code, const char *id, const void *data=NULL, const size_t &data_size=0);
 zmq::message_t *MakeReply(const uint32_t &result, const void *data=NULL, const size_t &data_size=0);
 }

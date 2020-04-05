@@ -1,8 +1,9 @@
 #include "client.h"
 #include <QDebug>
 #include <mutex>
-#include "util/protocol/protocol.h"
 #include <deque>
+#include "util/protocol/protocol.h"
+#include "ippa_id.h"
 #include "env.h"
 
 namespace {
@@ -60,11 +61,11 @@ void Client::run()
         std::string server_ip = Environment::instance().ip();
         qDebug()<<"Try connect to server ("<<server_ip.c_str()<<")";
         std::string server_addr = "tcp://" + server_ip + ":5555";
+//        socket.connect("tcp://192.168.0.21:5555");
         socket.connect(server_addr);
         qDebug()<<"Control-server is connected";
 
-        zmq::message_t *msg = protocol::MakeRequest(protocol::Code::kIdentification, "Z0000000");
-//        zmq::message_t *msg = protocol::MakeRequest(protocol::Code::kBroadcastMicOpenSuccess, "Z0000000");
+        zmq::message_t *msg = protocol::MakeRequest(protocol::Code::kIdentification, IPPA_ID);
         if (!msg) {
             sleep(1);
             continue;
@@ -75,9 +76,9 @@ void Client::run()
         zmq::message_t rep;
         socket.recv(rep);
         RequestProcedure(socket);
-        qDebug()<<"Reconnect to control-server";
         socket.close();
         zmq_ctx.close();
+        qDebug()<<"Reconnect to control-server";
         sleep(10);
     }
 }
@@ -109,22 +110,17 @@ void Client::RequestProcedure(zmq::socket_t &socket)
             qDebug()<<"invalid code-string ("<<token_list[1]<<")";
             continue;
         }
-
-        std::string id;
-        for (size_t i=0; token_list[0].size()+i < protocol::Code::ID_SIZE; ++i) {
-            id += "*";
-        }
-        id += token_list[0].toLocal8Bit().data();
         zmq::message_t *request_message = NULL;
         if (token_list.size() > 2) {
             request_message = protocol::MakeRequest(
                         code,
-                        id.c_str(),
+                        token_list[0].toLocal8Bit().data(),
                         token_list[2].toLocal8Bit().data(), token_list[2].length());
         }
         else {
             request_message = protocol::MakeRequest(
-                        code, id.c_str());
+                        code,
+                        token_list[0].toLocal8Bit().data());
         }
         if (request_message) {
             socket.send(*request_message);

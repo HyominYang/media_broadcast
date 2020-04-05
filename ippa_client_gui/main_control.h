@@ -11,8 +11,9 @@ public:
   explicit MainControl(QThread *parent = nullptr);
   virtual ~MainControl();
   void set_engine(QQmlApplicationEngine *engine);
-private:
+public slots:
   void gui_message(QString msg);
+private:
   void run() override;
   struct Data;
   struct Data *data_;
