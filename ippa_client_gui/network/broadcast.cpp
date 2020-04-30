@@ -2,7 +2,7 @@
 #include <QDebug>
 #include <mutex>
 #include <deque>
-#include <zmq/zmq.hpp>
+#include <zmq.hpp>
 #include "glog/logging.h"
 #include "util/protocol/protocol.h"
 #include "ippa_id.h"

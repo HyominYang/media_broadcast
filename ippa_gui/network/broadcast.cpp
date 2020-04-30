@@ -1,6 +1,6 @@
 #include "broadcast.h"
 #include <QDebug>
-#include <zmq/zmq.hpp>
+#include <zmq.hpp>
 #include "util/protocol/protocol.h"
 #include "env.h"
 

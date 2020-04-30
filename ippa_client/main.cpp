@@ -4,7 +4,7 @@
 
 #include <pthread.h>
 #include <unistd.h>
-#include <zmq/zmq.hpp>
+#include <zmq.hpp>
 #include <iostream>
 #include <mutex>
 #include <deque>
@@ -79,20 +79,13 @@ void* RequestClientWorker(void* param)
   while(true) {
     zmq::context_t ctx(1);
     zmq::socket_t socket(ctx, zmq::socket_type::req);
-    socket.bind(CONTROL_SERVER_ADDR);
+    socket.connect(CONTROL_SERVER_ADDR);
     LOG(INFO)<<"reply-server start";
     while (true) {
+      sleep(1);
       try {
-        zmq::message_t req;
-        socket.recv(req);
-        zmq::message_t *rep = RequestProcedure(req);
-        if (rep) {
-          LOG(INFO)<<"reply... ("<<rep->size()<<")";
-          socket.send(*rep);
-          delete rep;
-        }
       } catch (zmq::error_t &e) {
-        std::cout<<e.what()<<" ("<<e.num()<<")";
+        LOG(INFO)<<e.what()<<" ("<<e.num()<<")";
         break;
       }
     }
@@ -109,7 +102,7 @@ void* BroadCastServerWorker(void* param)
   while(true) {
     zmq::context_t ctx;
     zmq::socket_t socket(ctx, zmq::socket_type::sub);
-    socket.bind(BROADCAST_SERVER_ADDR);
+    socket.connect(BROADCAST_SERVER_ADDR);
     while (true) {
       sleep(1);
       try {
@@ -134,13 +127,33 @@ void* BroadCastServerWorker(void* param)
   }
   return NULL;
 }
+#include <gst/gst.h>
+#include <gst/gstelementfactory.h>
+void* MediaListenWorker(void* param)
+{
+  GstElement *pipeline = gst_pipeline_new ("audio-echo");
+  GstElement *source   = gst_element_factory_make ("autoaudiosrc", "audio-input");
+  while (true)
+  {
+    sleep(1);
+    LOG(INFO)<<gst_version_string();
+    LOG(INFO)<<gst_get_main_executable_path();
+    GList *list = gst_tracer_factory_get_list();
+//    GList *list = gst_element_factory_list_get_elements(GST_ELEMENT_FACTORY_TYPE_ANY, 0);
+//    gst_plugin_feature_list_free(list);
+  }
+  return NULL;
+}
 int main(int argc, char **argv)
 {
+  gst_init(NULL, NULL);
   ControlData data;
   pthread_t request_client_worker;
   pthread_t broadcast_server_worker;
+  pthread_t media_listen_worker;
   pthread_create(&request_client_worker, NULL, RequestClientWorker, &data);
   pthread_create(&broadcast_server_worker, NULL, BroadCastServerWorker, &data);
+  pthread_create(&media_listen_worker, NULL, MediaListenWorker, &data);
   pthread_join(request_client_worker, NULL);
   pthread_join(broadcast_server_worker, NULL);
   return 0;

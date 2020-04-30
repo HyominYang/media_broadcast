@@ -4,7 +4,7 @@
 
 #include <pthread.h>
 #include <unistd.h>
-#include <zmq/zmq.hpp>
+#include <zmq.hpp>
 #include <iostream>
 #include <mutex>
 #include <deque>

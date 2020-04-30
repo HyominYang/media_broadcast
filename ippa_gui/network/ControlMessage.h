@@ -7,7 +7,7 @@
 
 #include <cstdint>
 #include <iostream>
-#include <zmq/zmq.hpp>
+#include <zmq.hpp>
 
 namespace protocol {
 enum Code

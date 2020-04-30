@@ -3,7 +3,7 @@
 
 #include <QObject>
 #include <QThread>
-#include <zmq/zmq.hpp>
+#include <zmq.hpp>
 
 namespace network {
 class Client : public QThread
