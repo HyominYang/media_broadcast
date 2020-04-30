@@ -127,26 +127,16 @@ void* BroadCastServerWorker(void* param)
   }
   return NULL;
 }
-#include <gst/gst.h>
-#include <gst/gstelementfactory.h>
 void* MediaListenWorker(void* param)
 {
-  GstElement *pipeline = gst_pipeline_new ("audio-echo");
-  GstElement *source   = gst_element_factory_make ("autoaudiosrc", "audio-input");
   while (true)
   {
     sleep(1);
-    LOG(INFO)<<gst_version_string();
-    LOG(INFO)<<gst_get_main_executable_path();
-    GList *list = gst_tracer_factory_get_list();
-//    GList *list = gst_element_factory_list_get_elements(GST_ELEMENT_FACTORY_TYPE_ANY, 0);
-//    gst_plugin_feature_list_free(list);
   }
   return NULL;
 }
 int main(int argc, char **argv)
 {
-  gst_init(NULL, NULL);
   ControlData data;
   pthread_t request_client_worker;
   pthread_t broadcast_server_worker;
