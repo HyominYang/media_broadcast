@@ -28,13 +28,9 @@ TRANSLATIONS += \
 
 INCLUDEPATH += \
         /home/wind/workspace/private/media_broadcast \
-        /home/wind/workspace/private/media_broadcast/thirdparty/include \
-        /home/wind/workspace/private/media_broadcast/thirdparty/include/zmq \
 
 
 QMAKE_LIBDIR += \
-        /home/wind/workspace/private/media_broadcast/thirdparty/libs/zmq \
-        /home/wind/workspace/private/media_broadcast/thirdparty/libs/glog \
 
 
 LIBS += -lzmq -lglog
