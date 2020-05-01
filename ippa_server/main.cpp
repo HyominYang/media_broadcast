@@ -105,6 +105,8 @@ zmq::message_t *RequestProcedure(zmq::message_t &req)
   if (!protocol::CheckValidation(req)){
     return NULL;
   }
+  std::string req_str(req.to_string());
+  LOG(INFO)<<"REQ: "<<req_str;
   uint32_t code = protocol::GetCode(req);
 	std::string id(protocol::GetID(req), protocol::Code::ID_SIZE);
   LOG(INFO)<<id<<"|"<<std::setw(8)<<std::hex<<std::setfill('0')<<code<<"|"<<protocol::CodeToString(code);
