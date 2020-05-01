@@ -1,0 +1,11 @@
+각 rpi 단말에서 alsamixer 를 실행하여
+
+마이크와 스피커 볼륨을 최대로 하여야함
+
+서버는 마이크를 input 을 브로드캐스팅 하는데
+
+/usr/share/alsa/alsa.conf 의 수정해야할 내용이 있음
+default.ctl.card 를 1로 바꾸어야함
+default.pcm.card 를 1로 바꾸어야함
+
+그래야 USB 헤드셋이 정상 작동 함
