@@ -155,7 +155,9 @@ void* RequestClientWorker(void* param)
   do {
     zmq::context_t ctx(1);
     zmq::socket_t socket(ctx, zmq::socket_type::req);
-    socket.connect(Environment::instance().ip() + CONTROL_PORT);
+    std::string server_addr("tcp://");
+    server_addr += (Environment::instance().ip() + CONTROL_PORT);
+    socket.connect(server_addr);
     std::unique_ptr<zmq::message_t> msg(
         protocol::MakeRequest(protocol::Code::kIdentification, Environment::instance().id().c_str()));
     socket.send(*msg);
@@ -175,7 +177,9 @@ void* BroadCastServerWorker(void* param)
   while(true) {
     zmq::context_t ctx;
     zmq::socket_t socket(ctx, zmq::socket_type::sub);
-    socket.connect(Environment::instance().ip() + BROADCAST_PORT);
+    std::string server_addr("tcp://");
+    server_addr += (Environment::instance().ip() + BROADCAST_PORT);
+    socket.connect(server_addr);
     std::unique_ptr<zmq::message_t> msg;
     while (true) {
       sleep(1);
