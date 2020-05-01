@@ -16,7 +16,6 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         ../util/env.cpp \
         ../util/protocol/protocol.cpp \
-        env.cpp \
         main.cpp \
         main_control.cpp \
         network/broadcast.cpp \

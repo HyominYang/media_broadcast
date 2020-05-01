@@ -180,7 +180,7 @@ void* BroadCastServerWorker(void* param)
     while (true) {
       sleep(1);
       do {
-        try {
+//        try {
           msg.reset(new zmq::message_t);
           socket.recv(*msg);
           std::string req_id(protocol::GetID(*msg), protocol::ID_SIZE);
@@ -188,10 +188,10 @@ void* BroadCastServerWorker(void* param)
             continue;
           }
           BroadCastProcedure(*msg);
-        } catch (zmq::error_t &e) {
-          LOG(ERROR)<<e.what()<<" ("<<e.num()<<")";
-          break;
-        }
+//        } catch (zmq::error_t &e) {
+//          LOG(ERROR)<<e.what()<<" ("<<e.num()<<")";
+//          break;
+//        }
       } while(msg != NULL);
     }
     std::cout<<"Broadcast-server is closed";
