@@ -1,14 +1,21 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
+#include <glog/logging.h>
 #include "network/broadcast.h"
 #include "network/client.h"
 #include "main_control.h"
+#include "util/env.h"
 
 int main(int argc, char *argv[])
 {
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 
     QGuiApplication app(argc, argv);
+
+    if (!Environment::instance().Load()) {
+        LOG(ERROR)<<"get settings error";
+        return 0;
+    }
 
     network::Client c;
     c.start();

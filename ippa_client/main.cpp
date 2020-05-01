@@ -12,6 +12,7 @@
 #include <deque>
 
 #include "glog/logging.h"
+#include "util/check_id.h"
 #include "util/env.h"
 #include "util/protocol/protocol.h"
 
@@ -131,6 +132,7 @@ zmq::message_t *BroadCastProcedure(zmq::message_t &req)
     return protocol::MakeReply(protocol::Code::kResultOk);
   }
   if (code == protocol::Code::kBroadcastMicOpenSuccess) {
+    LOG(INFO)<<"listen media on";
     MediaListenWorker::instance().On(MediaListenWorker::kTypeMic);
     return protocol::MakeReply(protocol::Code::kResultOk);
   }
@@ -138,6 +140,7 @@ zmq::message_t *BroadCastProcedure(zmq::message_t &req)
     return protocol::MakeReply(protocol::Code::kResultOk);
   }
   if (code == protocol::Code::kBroadcastMicCloseSuccess) {
+    LOG(INFO)<<"listen media close";
     MediaListenWorker::instance().Off(MediaListenWorker::kTypeMic);
     return protocol::MakeReply(protocol::Code::kResultOk);
   }
@@ -180,6 +183,10 @@ void* BroadCastServerWorker(void* param)
         do {
           msg.reset(new zmq::message_t);
           socket.recv(*msg);
+          std::string req_id(protocol::GetID(*msg), protocol::ID_SIZE);
+          if (!util::check_id(Environment::instance().id().c_str(), req_id.c_str(), protocol::ID_SIZE)) {
+            continue;
+          }
           BroadCastProcedure(*msg);
         } while(msg != NULL);
       } catch (zmq::error_t &e) {
