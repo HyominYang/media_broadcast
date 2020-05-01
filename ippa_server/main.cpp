@@ -19,7 +19,9 @@
 class MicWorker {
  public:
   ~MicWorker()
-  {}
+  {
+    Off();
+  }
   static MicWorker& instance()
   {
     static MicWorker instance;
