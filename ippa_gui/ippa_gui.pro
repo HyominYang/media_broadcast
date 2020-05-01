@@ -14,6 +14,7 @@ DEFINES += QT_DEPRECATED_WARNINGS ZMQ_STATIC
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+        ../util/env.cpp \
         ../util/protocol/protocol.cpp \
         env.cpp \
         main.cpp \
@@ -27,14 +28,12 @@ TRANSLATIONS += \
     ippa_gui_ko_KR.ts
 
 INCLUDEPATH += \
-        /usr/include/glib-2.0 \
-        /usr/include/gstreamer-1.0 \
         /home/wind/workspace/private/media_broadcast \
 
 QMAKE_LIBDIR += \
 
 
-LIBS += -lzmq -lglog
+LIBS += -L/usr/local/lib -lzmq -lglog
 
 # Additional import path used to resolve QML modules in Qt Creator's code model
 QML_IMPORT_PATH =

@@ -14,6 +14,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+        ../util/env.cpp \
         ../util/protocol/protocol.cpp \
         env.cpp \
         main.cpp \
@@ -33,7 +34,7 @@ INCLUDEPATH += \
 QMAKE_LIBDIR += \
 
 
-LIBS += -lzmq -lglog
+LIBS += -L/usr/local/lib -lzmq -lglog
 
 # Additional import path used to resolve QML modules in Qt Creator's code model
 QML_IMPORT_PATH =

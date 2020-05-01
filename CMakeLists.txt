@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD 14)
 add_definitions(-DASIO_STANDALONE)
 
 include_directories(${CMAKE_CURRENT_LIST_DIR})
+link_directories(/usr/local/lib)
 #include_directories(${CMAKE_CURRENT_LIST_DIR}/thirdparty/include)
 #link_directories(${CMAKE_CURRENT_LIST_DIR}/thirdparty/libs/zmq)
 #link_directories(${CMAKE_CURRENT_LIST_DIR}/thirdparty/libs/glog)

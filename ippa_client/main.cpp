@@ -10,6 +10,7 @@
 #include <deque>
 
 #include "glog/logging.h"
+#include "util/env.h"
 #include "util/protocol/protocol.h"
 
 #define CONTROL_SERVER_ADDR "tcp://192.168.0.21:5555"
@@ -137,6 +138,10 @@ void* MediaListenWorker(void* param)
 }
 int main(int argc, char **argv)
 {
+  if (!Environment::instance().Load()) {
+    LOG(ERROR)<<"load conf error"<<std::endl;
+    return 0;
+  }
   ControlData data;
   pthread_t request_client_worker;
   pthread_t broadcast_server_worker;
@@ -147,4 +152,4 @@ int main(int argc, char **argv)
   pthread_join(request_client_worker, NULL);
   pthread_join(broadcast_server_worker, NULL);
   return 0;
-}
+

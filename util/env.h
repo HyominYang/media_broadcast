@@ -9,8 +9,11 @@ public:
     static Environment& instance();
     ~Environment();
     std::string ip() const;
+    std::string id() const;
+    bool Load();
 private:
     Environment();
+    void Clear();
     struct Data;
     struct Data *data_;
 };
