@@ -167,13 +167,24 @@ void* RequestClientWorker(void* param)
   }
   return NULL;
 }
+void *BroadCastProxyWorker(void *param)
+{
+  zmq::context_t ctx;
+  zmq::socket_t socket_xsub(ctx, zmq::socket_type::xsub);
+  zmq::socket_t socket_xpub(ctx, zmq::socket_type::xpub);
+  socket_xsub.bind("tcp://*:5557");
+  socket_xpub.bind("tcp://*:5556");
+  LOG(INFO)<<"publisher start...";
+  zmq::proxy(socket_xsub, socket_xpub, 0);
+  LOG(INFO)<<"proxy end";
+}
 void* BroadCastServerWorker(void* param)
 {
   ControlData *data = static_cast<ControlData*>(param);
   while(true) {
     zmq::context_t ctx;
     zmq::socket_t socket(ctx, zmq::socket_type::pub);
-    socket.bind("tcp://*:5556");
+    socket.connect("tcp://localhost:5557");
     while (true) {
       sleep(1);
       try {
@@ -204,8 +215,10 @@ int main(int argc, char **argv)
   ControlData data;
   pthread_t reply_server_worker;
   pthread_t broadcast_server_worker;
+  pthread_t broadcast_proxy_worker;
   pthread_create(&reply_server_worker, NULL, RequestClientWorker, &data);
   pthread_create(&broadcast_server_worker, NULL, BroadCastServerWorker, &data);
+  pthread_create(&broadcast_proxy_worker, NULL, BroadCastProxyWorker, &data);
   pthread_join(reply_server_worker, NULL);
   pthread_join(broadcast_server_worker, NULL);
   return 0;
