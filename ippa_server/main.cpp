@@ -6,12 +6,67 @@
 #include <unistd.h>
 #include <zmq.hpp>
 #include <iostream>
+#include <vector>
 #include <mutex>
 #include <deque>
 
-#include "glog/logging.h"
+#include <signal.h>
+
+#include <glog/logging.h>
+
 #include "util/protocol/protocol.h"
 
+class MicWorker {
+ public:
+  ~MicWorker()
+  {}
+  static MicWorker& instance()
+  {
+    static MicWorker instance;
+    return instance;
+  }
+  bool On()
+  {
+    Off();
+    // todo: make env info
+    handle_ = fork();
+    if (handle_ == 0) {
+      std::vector<std::string> params;
+      params.push_back("/usr/bin/cvlc");
+      params.push_back("-vvv");
+      params.push_back("alsa://hw:0,0");
+      params.push_back("--sout-keep");
+      params.push_back("--sout");
+      params.push_back("'#transcode{acodec=mp2,ab=64}:rtp{access=udp,sdp=rtsp://:1234/broadcast}'");
+      char ** argv = new char*[params.size()+1];
+      for(size_t counter=0; counter<params.size(); ++counter) {
+        argv[counter] = const_cast<char*>(params[counter].c_str());
+      }
+      argv[params.size()] = NULL;
+      execvp(argv[0], argv);
+      PLOG(ERROR)<<"mic on failed";
+      exit(0);
+    }
+    else if (handle_ < 0) {
+      PLOG(ERROR)<<"create handle error";
+      return false;
+    }
+    return true;
+  }
+  void Off()
+  {
+    if (handle_ > 0) {
+      kill(handle_, 2);
+      handle_ = -1;
+      sleep(2);
+    }
+  }
+ private:
+  MicWorker()
+  : handle_(-1)
+  {}
+  pid_t handle_;
+};
 class ControlData {
  public:
   ControlData()
@@ -60,12 +115,14 @@ zmq::message_t *RequestProcedure(zmq::message_t &req)
     return protocol::MakeReply(protocol::Code::kResultOk);
   }
   if (code == protocol::Code::kBroadcastMicOpen) {
+    MicWorker::instance().On();
     return protocol::MakeReply(protocol::Code::kResultOk);
   }
   if (code == protocol::Code::kBroadcastMicOpenSuccess) {
     return protocol::MakeReply(protocol::Code::kResultOk);
   }
   if (code == protocol::Code::kBroadcastMicClose) {
+    MicWorker::instance().Off();
     return protocol::MakeReply(protocol::Code::kResultOk);
   }
   if (code == protocol::Code::kBroadcastMicCloseSuccess) {

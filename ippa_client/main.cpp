@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <zmq.hpp>
 #include <iostream>
+#include <memory>
 #include <mutex>
 #include <deque>
 
@@ -13,8 +14,8 @@
 #include "util/env.h"
 #include "util/protocol/protocol.h"
 
-#define CONTROL_SERVER_ADDR "tcp://192.168.0.21:5555"
-#define BROADCAST_SERVER_ADDR "tcp://192.168.0.21:5556"
+#define BROADCAST_PORT ":5556"
+#define CONTROL_PORT ":5555"
 class ControlData {
  public:
   ControlData()
@@ -80,7 +81,7 @@ void* RequestClientWorker(void* param)
   while(true) {
     zmq::context_t ctx(1);
     zmq::socket_t socket(ctx, zmq::socket_type::req);
-    socket.connect(CONTROL_SERVER_ADDR);
+    socket.connect(Environment::instance().ip() + CONTROL_PORT);
     LOG(INFO)<<"reply-server start";
     while (true) {
       sleep(1);
@@ -103,17 +104,16 @@ void* BroadCastServerWorker(void* param)
   while(true) {
     zmq::context_t ctx;
     zmq::socket_t socket(ctx, zmq::socket_type::sub);
-    socket.connect(BROADCAST_SERVER_ADDR);
+    socket.connect(Environment::instance().ip() + BROADCAST_PORT);
+    std::unique_ptr<zmq::message_t> msg;
     while (true) {
       sleep(1);
       try {
-        zmq::message_t *msg;
         do {
           usleep(100000);
-          msg = data->get_broadcast_message();
+          msg.reset(data->get_broadcast_message());
           if (msg) {
             socket.send(*msg);
-            delete msg;
           }
         } while(msg != NULL);
       } catch (zmq::error_t &e) {
@@ -152,4 +152,5 @@ int main(int argc, char **argv)
   pthread_join(request_client_worker, NULL);
   pthread_join(broadcast_server_worker, NULL);
   return 0;
+}
 
