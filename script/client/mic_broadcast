@@ -1,0 +1,4 @@
+#sudo -u pi cvlc -vvv alsa://hw:1,0 --sout-keep --sout '#transcode{acodec=mp2,ab=64}:rtp{sdp=rtsp://:1234/broadcast}'
+#sudo -u pi cvlc -vvv alsa://hw:1,0 --sout-keep --sout '#transcode{acodec=ulaw,samplerate=8000,channels=1}:rtp{sdp=rtsp://:1234/broadcast}'
+ffplay rtsp://$1:1234/broadcast
+
