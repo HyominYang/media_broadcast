@@ -5,6 +5,7 @@
 #include "util/protocol/protocol.h"
 #include <deque>
 #include "util/env.h"
+#include <glog/logging.h>
 
 namespace {
 class Data {
@@ -147,16 +148,14 @@ void Client::RequestProcedure(zmq::socket_t &socket)
                 code = protocol::Code::kBroadcastMicOpenSuccess;
                 request_message.reset(protocol::MakeRequest(
                             code,
-                            id.c_str(),
-                            token_list[2].toLocal8Bit().data(), token_list[2].length()));
+                            id.c_str()));
                 continue;
             }
             else if (code == protocol::Code::kBroadcastMicClose) {
                 code = protocol::Code::kBroadcastMicCloseSuccess;
                 request_message.reset(protocol::MakeRequest(
                             code,
-                            id.c_str(),
-                            token_list[2].toLocal8Bit().data(), token_list[2].length()));
+                            id.c_str()));
                 continue;
             }
             break;
