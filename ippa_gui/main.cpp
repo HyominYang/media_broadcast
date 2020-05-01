@@ -1,5 +1,7 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
+#include <glog/logging.h>
+#include "util/env.h"
 #include "network/client.h"
 #include "main_control.h"
 
@@ -9,6 +11,10 @@ int main(int argc, char *argv[])
 
     QGuiApplication app(argc, argv);
 
+    if (!Environment::instance().Load()) {
+        LOG(ERROR)<<"get settings error";
+        return 0;
+    }
     network::Client c;
     c.start();
 

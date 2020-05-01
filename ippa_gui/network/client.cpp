@@ -1,9 +1,10 @@
 #include "client.h"
 #include <QDebug>
 #include <mutex>
+#include <memory>
 #include "util/protocol/protocol.h"
 #include <deque>
-#include "env.h"
+#include "util/env.h"
 
 namespace {
 class Data {
@@ -85,6 +86,12 @@ uint32_t StringToCode(QString &code_str) {
     if (code_str == "TEXT") {
         return protocol::Code::kBroadcastTextType1;
     }
+    else if (code_str == "MIC_ON") {
+        return protocol::Code::kBroadcastMicOpen;
+    }
+    else if (code_str == "MIC_OFF") {
+        return protocol::Code::kBroadcastMicClose;
+    }
     return protocol::Code::kProtocolError;
 }
 void Client::RequestProcedure(zmq::socket_t &socket)
@@ -115,20 +122,19 @@ void Client::RequestProcedure(zmq::socket_t &socket)
             id += "*";
         }
         id += token_list[0].toLocal8Bit().data();
-        zmq::message_t *request_message = NULL;
+        std::unique_ptr<zmq::message_t> request_message;
         if (token_list.size() > 2) {
-            request_message = protocol::MakeRequest(
+            request_message.reset(protocol::MakeRequest(
                         code,
                         id.c_str(),
-                        token_list[2].toLocal8Bit().data(), token_list[2].length());
+                        token_list[2].toLocal8Bit().data(), token_list[2].length()));
         }
         else {
-            request_message = protocol::MakeRequest(
-                        code, id.c_str());
+            request_message.reset(protocol::MakeRequest(
+                        code, id.c_str()));
         }
-        if (request_message) {
+        while (request_message) {
             socket.send(*request_message);
-            delete request_message;
             zmq::message_t rep;
             socket.recv(rep);
             if (rep.size() < protocol::Code::REP_MINIMUM_SIZE) {
@@ -136,6 +142,24 @@ void Client::RequestProcedure(zmq::socket_t &socket)
                 continue;
             }
             qDebug()<<"reply code: "<<*(uint32_t*)rep.data();
+
+            if (code == protocol::Code::kBroadcastMicOpen) {
+                code = protocol::Code::kBroadcastMicOpenSuccess;
+                request_message.reset(protocol::MakeRequest(
+                            code,
+                            id.c_str(),
+                            token_list[2].toLocal8Bit().data(), token_list[2].length()));
+                continue;
+            }
+            else if (code == protocol::Code::kBroadcastMicClose) {
+                code = protocol::Code::kBroadcastMicCloseSuccess;
+                request_message.reset(protocol::MakeRequest(
+                            code,
+                            id.c_str(),
+                            token_list[2].toLocal8Bit().data(), token_list[2].length()));
+                continue;
+            }
+            break;
         }
     }
 }

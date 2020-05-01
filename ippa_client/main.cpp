@@ -3,6 +3,7 @@
 //
 
 #include <pthread.h>
+#include <signal.h>
 #include <unistd.h>
 #include <zmq.hpp>
 #include <iostream>
@@ -16,6 +17,74 @@
 
 #define BROADCAST_PORT ":5556"
 #define CONTROL_PORT ":5555"
+class MediaListenWorker
+{
+ public:
+  ~MediaListenWorker()
+  {
+    Off();
+  }
+  static MediaListenWorker& instance() {
+    static MediaListenWorker instance;
+    return instance;
+  }
+  enum ListenerTypeCode {
+    kTypeNone=0,
+    kTypeMic,
+  };
+  void Off(const ListenerTypeCode &type = kTypeNone)
+  {
+    if (handle_ > 0) {
+      if (kill(handle_, 15)) {
+        PLOG(ERROR);
+      }
+      handle_ = -1;
+      sleep(1);
+      ListenerTypeCode off_type = type == kTypeNone ? listen_type_ : type;
+
+      if (off_type == kTypeMic) {
+        system("/usr/local/bin/mic_broadcast_off");
+      }
+      sleep(1);
+    }
+  }
+  bool On(const ListenerTypeCode &type) {
+    Off(listen_type_);
+    if (type == kTypeNone) {
+      LOG(ERROR)<<"listen-type is wrong";
+      return false;
+    }
+    handle_ = fork();
+    if (handle_ == 0) {
+      std::vector<std::string> params;
+      if (type == kTypeMic) {
+        params.push_back("/usr/local/bin/mic_broadcast");
+        params.push_back(Environment::instance().ip());
+      } else {
+        return 0;
+      }
+      char ** argv = new char*[params.size()+1];
+      for(size_t counter=0; counter<params.size(); ++counter) {
+        argv[counter] = const_cast<char*>(params[counter].c_str());
+      }
+      argv[params.size()] = NULL;
+      execvp(argv[0], argv);
+      PLOG(ERROR)<<"mic on failed";
+      exit(0);
+    }
+    else if (handle_ < 0) {
+      PLOG(ERROR)<<"create handle error";
+      return false;
+    }
+    return true;
+  }
+ private:
+  MediaListenWorker()
+  : handle_(-1)
+  {}
+  ListenerTypeCode listen_type_;
+  pid_t handle_;
+};
 class ControlData {
  public:
   ControlData()
@@ -45,7 +114,7 @@ class ControlData {
   std::mutex lock_broadcast_queue_;
   std::deque<zmq::message_t*> broadcast_queue_;
 };
-zmq::message_t *RequestProcedure(zmq::message_t &req)
+zmq::message_t *BroadCastProcedure(zmq::message_t &req)
 {
   if (!protocol::CheckValidation(req)){
     return NULL;
@@ -62,12 +131,14 @@ zmq::message_t *RequestProcedure(zmq::message_t &req)
     return protocol::MakeReply(protocol::Code::kResultOk);
   }
   if (code == protocol::Code::kBroadcastMicOpenSuccess) {
+    MediaListenWorker::instance().On(MediaListenWorker::kTypeMic);
     return protocol::MakeReply(protocol::Code::kResultOk);
   }
   if (code == protocol::Code::kBroadcastMicClose) {
     return protocol::MakeReply(protocol::Code::kResultOk);
   }
   if (code == protocol::Code::kBroadcastMicCloseSuccess) {
+    MediaListenWorker::instance().Off(MediaListenWorker::kTypeMic);
     return protocol::MakeReply(protocol::Code::kResultOk);
   }
   if (code == protocol::Code::kBroadcastTextType1) {
@@ -78,24 +149,21 @@ zmq::message_t *RequestProcedure(zmq::message_t &req)
 }
 void* RequestClientWorker(void* param)
 {
-  while(true) {
+  do {
     zmq::context_t ctx(1);
     zmq::socket_t socket(ctx, zmq::socket_type::req);
     socket.connect(Environment::instance().ip() + CONTROL_PORT);
+    std::unique_ptr<zmq::message_t> msg(
+        protocol::MakeRequest(protocol::Code::kIdentification, Environment::instance().id().c_str()));
+    socket.send(*msg);
+    msg.reset(new zmq::message_t);
+    socket.recv(*msg);
     LOG(INFO)<<"reply-server start";
-    while (true) {
-      sleep(1);
-      try {
-      } catch (zmq::error_t &e) {
-        LOG(INFO)<<e.what()<<" ("<<e.num()<<")";
-        break;
-      }
-    }
     std::cout<<"Control-server is closed";
     socket.close();
-    std::cout<<"Control-server is restart";
+//    std::cout<<"Control-server is restart";
     sleep(1);
-  }
+  } while (0);
   return NULL;
 }
 void* BroadCastServerWorker(void* param)
@@ -110,11 +178,9 @@ void* BroadCastServerWorker(void* param)
       sleep(1);
       try {
         do {
-          usleep(100000);
-          msg.reset(data->get_broadcast_message());
-          if (msg) {
-            socket.send(*msg);
-          }
+          msg.reset(new zmq::message_t);
+          socket.recv(*msg);
+          BroadCastProcedure(*msg);
         } while(msg != NULL);
       } catch (zmq::error_t &e) {
         std::cout<<e.what()<<" ("<<e.num()<<")";
