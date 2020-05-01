@@ -34,12 +34,7 @@ class MicWorker {
     handle_ = fork();
     if (handle_ == 0) {
       std::vector<std::string> params;
-      params.push_back("/usr/bin/cvlc");
-      params.push_back("-vvv");
-      params.push_back("alsa://hw:0,0");
-      params.push_back("--sout-keep");
-      params.push_back("--sout");
-      params.push_back("'#transcode{acodec=mp2,ab=64}:rtp{access=udp,sdp=rtsp://:1234/broadcast}'");
+      params.push_back("/usr/local/bin/mic_broadcast");
       char ** argv = new char*[params.size()+1];
       for(size_t counter=0; counter<params.size(); ++counter) {
         argv[counter] = const_cast<char*>(params[counter].c_str());
@@ -58,9 +53,14 @@ class MicWorker {
   void Off()
   {
     if (handle_ > 0) {
-      kill(handle_, 2);
+      if (kill(handle_, 15)) {
+        PLOG(ERROR);
+      }
       handle_ = -1;
-      sleep(2);
+      sleep(1);
+      system("/usr/local/bin/mic_broadcast_off");
+      sleep(1);
+
     }
   }
  private:
