@@ -177,6 +177,7 @@ void* BroadCastServerWorker(void* param)
   while(true) {
     zmq::context_t ctx;
     zmq::socket_t socket(ctx, zmq::socket_type::sub);
+    socket.set(zmq::sockopt::subscribe, "");
     std::string server_addr("tcp://");
     server_addr += (Environment::instance().ip() + BROADCAST_PORT);
     socket.connect(server_addr);
